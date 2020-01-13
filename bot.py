@@ -53,11 +53,13 @@ def main():
                 message = ""
                 for subject in subjects.keys():
                     message += f"{subject} : {''.join(subjects[subject] or ' ')} \n"
+                    marks = [int(mark) for mark in subjects[subject]]
+                    message += calc.main(marks) + "\n"
 
 
                 write_msg(event.user_id, message)
 
-            if event.text == "авторизация":
+            if event.text.upper() == "АВТОРИЗАЦИЯ":
                 auth = True
                 write_msg(event.user_id, "Итак, введите свой логин еду")
                 continue
