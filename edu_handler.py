@@ -1,11 +1,9 @@
 import requests
 from bs4 import BeautifulSoup as bs
 
-import authorization
-
 # LOGIN = authorization.load_data()[0]
 # PASSWORD = authorization.load_data()[1]
-URL_LOG = 'https://edu.tatar.ru/logon/'
+URL_LOG = 'https://edu.tatar.ru/logon'
 DIARY_URL = "https://edu.tatar.ru/user/diary/term"
 COOKIE_FILE = "AppData/cookies.data"
 
@@ -25,6 +23,7 @@ headers = {
                   'YaBrowser/19.12.3.320 Yowser/2.5 Safari/537.36 ',
 }
 tbd = ["<td>", "</td>", "просмотр", ".", "\n", "", " просмотр\n", "-"]
+
 
 # data = {
 #     "main_login": LOGIN,
@@ -47,19 +46,29 @@ def edu_auth(login, password):
         "main_password": password,
     }
     response = session.post(url=URL_LOG, data=data, headers=headers)
-    return response.cookie
+    print(response.url)
+    if response.url == URL_LOG: return {"cookies": response.cookies, "name": "не удалость авторизоваться"}
+    name = parse_name(response.content)
+    return {"cookies": response.cookies, "name": name}
 
 
-def parse():
-    table = soup.find('table')
+def parse_name(content):
+    soup = bs(content, "html.parser")
+    table = soup.find("table")
+    row = table.find("tr")
+    cells = [td.text for td in row.findAll('td')]
+    return cells[-1]
 
-    rows = table.findAll('tr')[:-1]
-
-    for row in rows[1:]: dick[row.find('td').text] = [word.text for word in row.findAll('td')[1:]]
-
-    for i in dick: dick[i] = [word for word in dick[i] if word not in tbd]
-
-    for i in dick:
-        for j in dick[i]:
-            if "." in j:
-                dick[i].remove(j)
+# def parse():
+#     table = soup.find('table')
+#
+#     rows = table.findAll('tr')[:-1]
+#
+#     for row in rows[1:]: dick[row.find('td').text] = [word.text for word in row.findAll('td')[1:]]
+#
+#     for i in dick: dick[i] = [word for word in dick[i] if word not in tbd]
+#
+#     for i in dick:
+#         for j in dick[i]:
+#             if "." in j:
+#                 dick[i].remove(j)
