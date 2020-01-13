@@ -36,7 +36,7 @@ tbd = ["<td>", "</td>", "просмотр", ".", "\n", "", " просмотр\n"
 # global soup
 # soup = bs(response.content, "html.parser")
 #
-# dick = dict()
+
 
 
 def edu_auth(login, password):
@@ -59,16 +59,23 @@ def parse_name(content):
     cells = [td.text for td in row.findAll('td')]
     return cells[-1]
 
-# def parse():
-#     table = soup.find('table')
-#
-#     rows = table.findAll('tr')[:-1]
-#
-#     for row in rows[1:]: dick[row.find('td').text] = [word.text for word in row.findAll('td')[1:]]
-#
-#     for i in dick: dick[i] = [word for word in dick[i] if word not in tbd]
-#
-#     for i in dick:
-#         for j in dick[i]:
-#             if "." in j:
-#                 dick[i].remove(j)
+def parse(cookies):
+    dick = dict()
+    session = requests.Session()
+    session.cookies = cookies
+    response = session.get(DIARY_URL)
+    soup = bs(response.content, "html.parser")
+    table = soup.find('table')
+
+    rows = table.findAll('tr')[:-1]
+
+    for row in rows[1:]: dick[row.find('td').text] = [word.text for word in row.findAll('td')[1:]]
+
+    for i in dick: dick[i] = [word for word in dick[i] if word not in tbd]
+
+    for i in dick:
+        for j in dick[i]:
+            if "." in j:
+                dick[i].remove(j)
+
+    return dick
