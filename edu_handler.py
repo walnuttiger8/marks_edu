@@ -1,14 +1,13 @@
-import pytools
-
 import requests
 from bs4 import BeautifulSoup as bs
 
 import authorization
 
-LOGIN = authorization.load_data()[0]
-PASSWORD = authorization.load_data()[1]
+# LOGIN = authorization.load_data()[0]
+# PASSWORD = authorization.load_data()[1]
 URL_LOG = 'https://edu.tatar.ru/logon/'
 DIARY_URL = "https://edu.tatar.ru/user/diary/term"
+COOKIE_FILE = "AppData/cookies.data"
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
@@ -27,20 +26,29 @@ headers = {
 }
 tbd = ["<td>", "</td>", "просмотр", ".", "\n", "", " просмотр\n", "-"]
 
-data = {
-    "main_login": LOGIN,
-    "main_password": PASSWORD,
-}
+# data = {
+#     "main_login": LOGIN,
+#     "main_password": PASSWORD,
+# }
 
-cookies = pytools.load("cookies.data")
+# session = requests.Session()
+# # session.cookies = cookies
+# response = session.get(DIARY_URL)
+# global soup
+# soup = bs(response.content, "html.parser")
+#
+# dick = dict()
 
-session = requests.Session()
-session.cookies = cookies
-response = session.get(DIARY_URL)
-global soup
-soup = bs(response.content, "html.parser")
 
-dick = dict()
+def edu_auth(login, password):
+    session = requests.Session()
+    data = {
+        "main_login": login,
+        "main_password": password,
+    }
+    response = session.post(url=URL_LOG, data=data, headers=headers)
+    return response.cookie
+
 
 def parse():
     table = soup.find('table')

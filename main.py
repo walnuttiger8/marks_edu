@@ -1,4 +1,3 @@
 import authorization
-import parser
-
+import edu_handler
 
