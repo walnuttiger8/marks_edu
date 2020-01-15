@@ -4,9 +4,7 @@
     <bookmark url="file://$PROJECT_DIR$/edu_handler.py" line="70" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="dec33eeb-3761-42ce-b017-fe39691d8db0" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/runtime" beforeDir="false" afterPath="$PROJECT_DIR$/runtime" afterDir="false" />
-    </list>
+    <list default="true" id="dec33eeb-3761-42ce-b017-fe39691d8db0" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,7 +111,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="-8" />
     <option name="y" value="67" />
     <option name="width" value="1400" />
@@ -356,7 +354,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
