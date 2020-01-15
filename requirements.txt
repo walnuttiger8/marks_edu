@@ -1,4 +1,7 @@
 vk-api==11.5.0
+bs4
+requests
+
 
 
 

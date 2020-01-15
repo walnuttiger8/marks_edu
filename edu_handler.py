@@ -59,11 +59,17 @@ def parse_name(content):
     cells = [td.text for td in row.findAll('td')]
     return cells[-1]
 
-def parse(cookies):
+def parse(data):
+
     dick = dict()
     session = requests.Session()
-    session.cookies = cookies
+    session.cookies = data[2]
     response = session.get(DIARY_URL)
+    if response.url == URL_LOG:
+        cookies = edu_auth(data[0],data[1])['cookies']
+        session.cookies = cookies
+        response = session.get((DIARY_URL))
+
     soup = bs(response.content, "html.parser")
     table = soup.find('table')
 

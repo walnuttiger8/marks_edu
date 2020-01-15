@@ -102,7 +102,7 @@ class Bot:
         if str(event.user_id) in base.keys():
             self.write_msg(event.user_id, "Вот твои оценки на сегодняшний день: ")
             data = base[str(event.user_id)]
-            subjects = edu_handler.parse(data[2])
+            subjects = edu_handler.parse(data)
             message = ""
             for subject in subjects.keys():
                 message += f"{subject} : {', '.join(subjects[subject] or ' ')} \n"
