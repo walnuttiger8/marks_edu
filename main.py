@@ -1,4 +1,5 @@
-import authorization
-import edu_handler
+import bot
 
-import math
+bot = bot.Bot()
+bot.run()
+

@@ -26,6 +26,8 @@ common_dick = {
     "СКИНЬ ЖОПУ":"АХ ЕСЛИ БЫ Я МОГ...",
     "ДАША":"НЕ НАПИСАЛА",
     "КАИ":"ПУП ЗЕМЛИ",
+    "ХЛЕБ":"КОЛБАСА",
+    "КОЛБАСА":"СНАЧАЛА ХЛЕБ",
 }
 
 
@@ -33,8 +35,7 @@ class Bot:
     def __init__(self):
         self.auth = False
         self.general_message = f"Мой функционал предельно прост. Я отправляю оценки и считаю баллы " \
-            f"Если ты еще не авторизовался,напиши 'авторизация', если да, пиши 'оценки'. На этом собственно все, " \
-            f"удачного использования "
+            f"Просто напиши 'оценки'"
 
     @staticmethod
     def write_msg(user_id, message, rand=None):
@@ -58,7 +59,8 @@ class Bot:
         last_bot_message = self.get_last_bot_message(event.user_id)
         global login, password, cookies
         if last_bot_message['text'] == MSG_CODES['login']:
-            login = event.text
+            login = event.text.strip()
+
             try:
                 login = int(login)
                 self.write_msg(event.user_id, "Здорово, теперь нам нужен ваш пароль)")
@@ -98,16 +100,17 @@ class Bot:
         base = authorization.load_data()
 
         if str(event.user_id) in base.keys():
-            self.write_msg(event.user_id, "О, ты уже авторизован!")
+            self.write_msg(event.user_id, "Вот твои оценки на сегодняшний день: ")
             data = base[str(event.user_id)]
             subjects = edu_handler.parse(data[2])
             message = ""
             for subject in subjects.keys():
-                message += f"{subject} : {''.join(subjects[subject] or ' ')} \n"
+                message += f"{subject} : {', '.join(subjects[subject] or ' ')} \n"
                 marks = [int(mark) for mark in subjects[subject]]
                 message += calc.main(marks) + "\n"
 
-                self.write_msg(event.user_id, message)
+            self.write_msg(event.user_id, message)
+
         else:
             self.write_msg(event.user_id, "Судя по всему ты еще не авторизовался")
             self.register_new_user(event)
@@ -118,27 +121,28 @@ class Bot:
                 print(f"Получено новое сообщение от {vk_session.users.get(user_ids=event.user_id)[0]['first_name']}")
                 print("Текст", event.text)
 
+                if self.auth:
+                    self.register_new_user(event)
+                    continue
+
+
                 if event.text.upper() == "АВТОРИЗАЦИЯ":
                     self.auth = True
                     self.write_msg(event.user_id, MSG_CODES['login'])
                     continue
                 elif event.text.upper() == "ОЦЕНКИ":
-                    if event.user_id in authorization.load_data().keys():
+                    if str(event.user_id) in authorization.load_data().keys():
                         self.give_marks(event)
                     else:
                         self.write_msg(event.user_id,"Ты ещё не авторизовался")
                         self.auth = True
                         self.write_msg(event.user_id,MSG_CODES['login'])
+                        self.register_new_user(event)
 
-            elif event.text.upper in common_dick.keys():
-                self.write_msg(event.text,common_dick[event.text.upper()].capitalize())
+                elif event.text.upper() in common_dick.keys():
+                    self.write_msg(event.user_id,common_dick[event.text.upper()].capitalize())
 
-            else:
-                self.write_msg(event.user_id,self.general_message)
-
-                if self.auth:
-                    self.register_new_user(event)
+                else:
+                    self.write_msg(event.user_id,self.general_message)
 
 
-bot = Bot()
-bot.run()
