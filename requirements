@@ -1,4 +1,4 @@
-pyTelegramBotAPI
+python == 3.7.4
 bs4
 requests
 vk_api
