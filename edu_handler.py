@@ -5,7 +5,9 @@ from bs4 import BeautifulSoup as bs
 # PASSWORD = authorization.load_data()[1]
 URL_LOG = 'https://edu.tatar.ru/logon'
 DIARY_URL = "https://edu.tatar.ru/user/diary/term"
+HOMEWORK_URL = "https://edu.tatar.ru/user/diary/day"
 COOKIE_FILE = "AppData/cookies.data"
+MAIN_URL = "https://edu.tatar.ru/"
 
 headers = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3",
@@ -38,16 +40,20 @@ tbd = ["<td>", "</td>", "просмотр", ".", "\n", "", " просмотр\n"
 #
 
 
-
 def edu_auth(login, password):
+    login = int(login)
+    password = password.upper()
+
     session = requests.Session()
+    print('login',login, type(login))
+    print('password',password, type(password))
     data = {
         "main_login": login,
         "main_password": password,
     }
     response = session.post(url=URL_LOG, data=data, headers=headers)
     print(response.url)
-    if response.url == URL_LOG: return {"cookies": response.cookies, "name": "не удалость авторизоваться"}
+    assert response.url == MAIN_URL, "не удалось авторизоваться"
     name = parse_name(response.content)
     return {"cookies": response.cookies, "name": name}
 
@@ -59,14 +65,14 @@ def parse_name(content):
     cells = [td.text for td in row.findAll('td')]
     return cells[-1]
 
-def parse(data):
 
+def parse(data):
     dick = dict()
     session = requests.Session()
     session.cookies = data[2]
     response = session.get(DIARY_URL)
     if response.url == URL_LOG:
-        cookies = edu_auth(data[0],data[1])['cookies']
+        cookies = edu_auth(data[0], data[1])['cookies']
         session.cookies = cookies
         response = session.get((DIARY_URL))
 
@@ -85,3 +91,32 @@ def parse(data):
                 dick[i].remove(j)
 
     return dick
+
+
+def get_homework(data):
+    dick = dict()
+    session = requests.Session()
+    session.cookies = data[2]
+    response = session.get(HOMEWORK_URL)
+    if response.url == URL_LOG:
+        cookies = edu_auth(data[0], data[1])['cookies']
+        session.cookies = cookies
+        response = session.get((HOMEWORK_URL))
+
+    soup = bs(response.content, "html.parser")
+
+    table = soup.find('table', {'class': 'main'})
+    rows = table.findAll('tr')[1:]
+    for row in rows:
+        td = row.findAll('td')
+        if len(td) < 1: continue
+        dick[td[1].text] = td[2].text.replace("\n", "") or "Не задано"
+
+    return dick
+
+
+def get_next_url(soup):
+    span = soup.find('span', {'class': 'nextd'})
+    url = span.find('a')['href']
+    return url
+
