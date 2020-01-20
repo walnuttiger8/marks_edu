@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
@@ -20,6 +21,7 @@ vk = vk_api.VkApi(token=TOKEN)
 vk_session = vk.get_api()
 global longpoll
 longpoll = VkLongPoll(vk)
+now = datetime
 
 common_dick = {
     "ПРИВЕТ": "Привет",
@@ -37,23 +39,23 @@ class Bot:
     def __init__(self):
         # self.general_message = f"Мой функционал предельно прост. Я отправляю оценки и считаю баллы " \
         #     f"Просто напиши 'оценки'"
-        self.general_message = "Если у тебя нет клавиатуры, просто напиши 'комманды'"
+        self.general_message = "Если у тебя нет клавиатуры, просто напиши 'помощь'"
         self.base = authorization.load_data()
         assert isinstance(self.base, dict), "Неверный тип базы данных"
         self.COMMANDS = {
-            "ОЦЕНКИ":       self.give_marks,
-            "ПРИВЕТ":       self.common,
-            "САФЭН":        self.common,
-            "ГРАДУСЫ":      self.common,
-            "СКИНЬ ЖОПУ":   self.common,
-            "ДАША":         self.common,
-            "КАИ":          self.common,
-            "ХЛЕБ":         self.common,
-            "КОЛБАСА":      self.common,
+            "ОЦЕНКИ": self.give_marks,
+            "ДЗ НА ЗАВТРА": self.get_homework,
+            "ДЗ НА СЕГОДНЯ": self.get_homework,
+            "ПОСЧИТАТЬ": self.calc,
+            "АВТОРИЗАЦИЯ": self.register,
+            "ПОМОЩЬ": self.get_commands,
         }
+        self.dick = dict()
+        self.dick.update(self.COMMANDS)
+        self.dick.update(common_dick)
 
     @staticmethod
-    def write_msg(user_id, *messages, keyboard_type=None):
+    def write_msg(user_id, *messages, keyboard_type=None,logging = True):
         """
         Отправляет сообщения из поля messages пользователю
 
@@ -67,12 +69,15 @@ class Bot:
             buttons.append(Keyboard.get_buttons('negative', 'Отмена'))
         else:
             buttons.append(Keyboard.get_buttons('positive', 'Оценки'))
+            buttons.append(Keyboard.get_buttons('primary', 'Дз на завтра', 'Дз на сегодня'))
+            buttons.append(Keyboard.get_buttons('secondary', 'Посчитать', 'Помощь', "Авторизация"))
+            # buttons.append(Keyboard.get_buttons('primary', 'Дз: сегодня'))
 
         keyboard = Keyboard.get_keyboard(False, buttons)
         for message in messages:
             random_id = random.randint(10, 100000)
             vk_session.messages.send(user_id=user_id, message=message, random_id=random_id, keyboard=keyboard)
-            print("Ответил", message)
+            if logging: print("Ответил", message)
 
     @staticmethod
     def get_last_bot_message(user_id):
@@ -114,6 +119,15 @@ class Bot:
 
         return message
 
+    def get_commands(self, event):
+        """ Просто возвращает комманды)
+        """
+        message = ""
+        for command in self.COMMANDS:
+            message += command.capitalize() + "-" + str(self.COMMANDS[command].__doc__) + "\n"
+
+        self.write_msg(event.user_id, message)
+
     def common(self, event):
         """
 
@@ -123,11 +137,7 @@ class Bot:
         self.write_msg(event.user_id, common_dick[event.text.upper()])
 
     def give_marks(self, event):
-        """
-
-        Выводит пользователю его текущие оценки
-
-        :param event: event obect
+        """ Возвращает текущие оценки и считает баллы до ближайшего по среднему арифметическому
         """
         base = authorization.load_data()
 
@@ -137,34 +147,81 @@ class Bot:
             subjects = edu_handler.parse(data)
             message = self.get_table(subjects)
 
-            self.write_msg(event.user_id, "Вот твои оценки на сегодняшний день: ", message)
+            self.write_msg(event.user_id, "Вот твои оценки на сегодняшний день: ", message, logging=False)
 
         else:
-            self.write_msg(
-                event.user_id,
-                "Ты ещё не авторизовался", "Введите ваш логин и пароль через "
-                                           "запятую.\n Пример: 12345678910,ABCD",
-                keyboard_type='reg')
-            self.register()
+
+            self.register(event)
+
+    def get_homework(self, event):
+        """ Просто возвращает домашнее задание
+        """
+        base = authorization.load_data()
+
+        today = True if event.text.upper() == "ДЗ НА СЕГОДНЯ" else False
+
+        if str(event.user_id) in base.keys():
+
+            data = base[str(event.user_id)]
+            homework = edu_handler.get_homework(data, today=today)
+            message = ""
+            if isinstance(homework, str):
+                message = homework
+            else:
+                for subject in homework.keys():
+                    message += f"{subject}: \n {homework[subject]} \n\n"
+
+            self.write_msg(event.user_id, "Вот твоё домашнее задание: ", message,logging=False)
+
+        else:
+
+            self.register(event)
+
+    def calc(self, outer_event):
+        """ Возвращает балл, оценки до следующего балла, что будет, если получть 2
+        """
+        self.write_msg(outer_event.user_id, 'Введи свои оценки через запятую. \n Пример: 2,3,4,5',
+                       keyboard_type='reg')
+        for event in longpoll.listen():
+            if event.type == VkEventType.MESSAGE_NEW and event.to_me and not event.from_me:
+                if event.text.upper() == 'ОТМЕНА':
+                    break
+
+                event.text.strip()
+                marks = event.text.split(',')
+                try:
+                    marks = [int(mark) for mark in marks]
+                except ValueError:
+                    self.write_msg(event.user_id, 'Видимо что-то было введено не так, попробуй заново')
+                    continue
+                message = f"Твой балл: {calc.mean(marks)} \n {calc.main(marks)}"
+                self.write_msg(event.user_id, message)
+                continue
 
     def run(self):
         for event in longpoll.listen():
+
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and not event.from_me:
                 print(f"Получено новое сообщение от {vk_session.users.get(user_ids=event.user_id)[0]['first_name']}")
                 print("Текст", event.text)
 
-                if event.text.upper() in self.COMMANDS:
-                    function = self.COMMANDS[event.text.upper()]
+                if event.text.upper() in self.dick:
+                    function = self.dick[event.text.upper()]
                     function(event)
 
                 else:
                     self.write_msg(event.user_id, self.general_message)
 
-    def register(self):
+    def register(self, outer_event):
+        """ Запускает процесс регистрации
         """
 
-        Запускает процесс регистрации с собственным прослушиванием сообщений
-        """
+        self.write_msg(
+            outer_event.user_id,
+            "Ты ещё не авторизовался", "Введите ваш логин и пароль через "
+                                       "запятую.\n Пример: 12345678910,ABCD",
+            keyboard_type='reg')
+
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW and event.to_me and not event.from_me:
                 print("Начало регистрации пользователя", vk_session.users.get(user_ids=event.user_id)[0]['first_name'])

@@ -8,26 +8,20 @@ class Keyboard:
         # assert len(colors) == len(text), 'Количество цветов должно совпадать количеству сообщений'
         buttons = list()
         for label in text:
-            buttons.append([{
+            buttons.append({
                 'action': {
                     'type': "text",
                     'label': label
                 },
                 "color": color
-                }])
+                })
         if len(buttons) > 1:
+
             return buttons
         else:
-            return buttons[0]
 
-    # def get_buttons(self, color, label):
-    #     return [{
-    #         'action': {
-    #             'type': "text",
-    #             'label': label
-    #         },
-    #         'color': color
-    #     }]
+            return [buttons[0]]
+
 
     @staticmethod
     def get_keyboard(one_time=False, buttons=[]):

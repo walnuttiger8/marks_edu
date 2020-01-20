@@ -42,7 +42,7 @@ tbd = ["<td>", "</td>", "просмотр", ".", "\n", "", " просмотр\n"
 
 def edu_auth(login, password):
     login = int(login)
-    password = password.upper()
+    password = password.strip()
 
     session = requests.Session()
     print('login',login, type(login))
@@ -90,10 +90,10 @@ def parse(data):
             if "." in j:
                 dick[i].remove(j)
 
-    return dick
+    return dick if len(dick) > 0 else 'Ничего не задано'
 
 
-def get_homework(data):
+def get_homework(data,today=False):
     dick = dict()
     session = requests.Session()
     session.cookies = data[2]
@@ -105,6 +105,11 @@ def get_homework(data):
 
     soup = bs(response.content, "html.parser")
 
+    if not today:
+        url = get_next_url(soup)
+        response = session.get(url)
+        soup = bs(response.content, "html.parser")
+
     table = soup.find('table', {'class': 'main'})
     rows = table.findAll('tr')[1:]
     for row in rows:
@@ -112,7 +117,7 @@ def get_homework(data):
         if len(td) < 1: continue
         dick[td[1].text] = td[2].text.replace("\n", "") or "Не задано"
 
-    return dick
+    return dick if len(dick) > 0 else "Нет домашнего задания"
 
 
 def get_next_url(soup):
@@ -120,3 +125,8 @@ def get_next_url(soup):
     url = span.find('a')['href']
     return url
 
+# import authorization
+#
+# data = authorization.load_data()
+# data = data['189258080']
+# print(get_homework(data))

@@ -35,7 +35,7 @@ def main(marks):
     last = middle - last
     last = last * 10
 
-    if last in range(0, 6):
+    if math.floor(last) in range(0, 6):
         prefer = math.floor(middle) + 1
     else:
         prefer = math.ceil(middle) + 1
@@ -47,5 +47,10 @@ def main(marks):
         result = calc(marks.copy(), mark, prefer)
         message += " ".join(
             [str(result['count']), str_foramat(result['count']), '"' + str(mark) + '"', "для балла", str(result['mean'])]) + "\n"
+
+    if mean(marks) > 2:
+        m = marks.copy()
+        m.append(2)
+        message += f'Если получишь 2, балл опустится до {mean(m)} \n'
 
     return message
